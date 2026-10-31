@@ -11,9 +11,10 @@ public class Pokemon extends Carta {
     private int costoRetirada;
     private List<Ataque> ataques;
     private boolean esEx;
+    private String debilidad;
 
     public Pokemon(String nombre, String tipo, int puntosSalud,
-                   int costoRetirada, boolean esEx) {
+                   int costoRetirada, String debilidad,boolean esEx) {
 
         super(nombre, "Pokemon");
 
@@ -21,9 +22,11 @@ public class Pokemon extends Carta {
         this.puntosSalud = puntosSalud;
         this.puntosSaludMaximos = puntosSalud;
         this.costoRetirada = costoRetirada;
+        this.debilidad = debilidad;
         this.esEx = esEx;
         this.ataques = new ArrayList<>();
     }
+
 
     public String getTipo() {
         return tipo;
@@ -43,6 +46,10 @@ public class Pokemon extends Carta {
 
     public List<Ataque> getAtaques() {
         return ataques;
+    }
+
+    public String getDebilidad() {
+        return debilidad;
     }
 
     public boolean esEx() {
