@@ -14,7 +14,7 @@ public class Pokemon extends Carta {
     private List<String> energiasAdjuntas;
     private boolean esEx;
 
-    // Constructor
+    // Constructor sin debilidad
     public Pokemon(String nombre, String tipo, int puntosSalud,
                    int costoRetirada, boolean esEx) {
 
@@ -80,11 +80,7 @@ public class Pokemon extends Carta {
 
     // Obtener los puntos de premio
     public int getPuntosPremio() {
-        if (esEx) {
-            return 2;
-        }
-
-        return 1;
+        return esEx ? 2 : 1;
     }
 
     // Agregar un ataque
