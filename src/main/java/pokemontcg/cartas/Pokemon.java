@@ -67,4 +67,12 @@ public class Pokemon extends Carta {
     public void agregarAtaque(Ataque ataque) {
         ataques.add(ataque);
     }
+
+
+    public void recibirDanio(int danioFinal) {
+        this.puntosSalud -= danioFinal;
+        if (this.puntosSalud < 0) {
+            this.puntosSalud = 0;
+        }
+    }
 }
