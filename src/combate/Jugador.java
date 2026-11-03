@@ -1,7 +1,7 @@
-package pokemontcg.combate;
+package combate;
 
-import pokemontcg.cartas.Carta;
-import pokemontcg.cartas.Pokemon;
+import cartas.Carta;
+import cartas.Pokemon;
 
 public class Jugador {
     private String nombre;

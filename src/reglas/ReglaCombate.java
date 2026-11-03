@@ -1,8 +1,8 @@
-package pokemontcg.reglas;
+package reglas;
 
-import pokemontcg.cartas.Ataque;
-import pokemontcg.cartas.Pokemon;
-import pokemontcg.combate.Jugador;
+import cartas.Ataque;
+import cartas.Pokemon;
+import combate.Jugador;
 
 public class ReglaCombate {
 

@@ -1,9 +1,9 @@
-package pokemontcg.combate;
+package combate;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import pokemontcg.cartas.Pokemon;
+import cartas.Pokemon;
 
 public class Banco {
 

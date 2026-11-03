@@ -1,6 +1,6 @@
-package pokemontcg.cartas;
+package cartas;
 
-import pokemontcg.combate.Jugador;
+import combate.Jugador;
 
 public interface Activable {
 

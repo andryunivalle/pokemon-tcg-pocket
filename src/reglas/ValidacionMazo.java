@@ -1,9 +1,9 @@
-package pokemontcg.reglas;
+package reglas;
 
 
-import pokemontcg.cartas.Carta;
-import pokemontcg.combate.Mazo;
-import pokemontcg.combate.Jugador;
+import cartas.Carta;
+import combate.Mazo;
+import combate.Jugador;
 
 public class ValidacionMazo {
 
