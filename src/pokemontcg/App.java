@@ -1,26 +1,37 @@
 package pokemontcg;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
+import pokemontcg.cartas.Ataque;
 import pokemontcg.cartas.Carta;
 import pokemontcg.cartas.Entrenador;
 import pokemontcg.cartas.Pokemon;
+import pokemontcg.cartas.Soporte;
 import pokemontcg.combate.Jugador;
 import pokemontcg.datos.CatalogoEntrenadores;
 import pokemontcg.datos.CatalogoPokemon;
+import pokemontcg.reglas.ReglaCombate;
 import pokemontcg.reglas.ValidacionMazo;
 
 public class App {
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
+        ReglaCombate reglaCombate = new ReglaCombate();
 
         System.out.println("==========================================");
-        System.out.println("   === INICIANDO PÓKEMON TCG POCKET ===   ");
+        System.out.println("   === INICIANDO POKEMON TCG POCKET ===   ");
         System.out.println("==========================================");
 
-        // 1. Inicializar Jugadores
-        Jugador ash = new Jugador("Ash");
-        Jugador gary = new Jugador("Gary");
+        // 1. Nombres Personalizados (RF5)
+        System.out.print("Ingresa el nombre del Jugador 1: ");
+        String n1 = scanner.nextLine();
+        System.out.print("Ingresa el nombre del Jugador 2: ");
+        String n2 = scanner.nextLine();
+
+        Jugador ash = new Jugador(n1.isBlank() ? "Jugador 1" : n1);
+        Jugador gary = new Jugador(n2.isBlank() ? "Jugador 2" : n2);
 
         // 2. Poblar Mazos desde Catálogos
         for (Pokemon p : CatalogoPokemon.obtenerPokemon()) {
@@ -36,9 +47,9 @@ public class App {
         ValidacionMazo.repartirManoInicial(ash);
         ValidacionMazo.repartirManoInicial(gary);
 
-        // Asignar Pokémon Activo Inicial
-        ash.setPokemonActivo(CatalogoPokemon.obtenerPokemon().get(0)); // Pikachu / Mewtwo ex
-        gary.setPokemonActivo(CatalogoPokemon.obtenerPokemon().get(1)); // Zapdos ex / Squirtle
+        // Seleccionar Pokémon Activo Inicial desde la mano de cada jugador (RF3)
+        seleccionarPokemonActivoInicial(ash, scanner);
+        seleccionarPokemonActivoInicial(gary, scanner);
 
         // 4. Bucle Principal de Juego (Game Loop)
         Jugador actual = ash;
@@ -47,14 +58,21 @@ public class App {
         boolean juegoActivo = true;
 
         while (juegoActivo) {
+            // Regla RF2/RF3: Derrota si no hay cartas en el mazo al robar
+            if (actual.getMazo().estaVacio()) {
+                System.out.println("\n[DUELO] ¡" + actual.getNombre() + " no tiene cartas en el mazo para robar!");
+                System.out.println("\n*** ¡" + oponente.getNombre() + " HA GANADO LA PARTIDA! ***");
+                break;
+            }
+
             actual.robarCarta();
             actual.agregarEnergiaZona();
 
             boolean energiaAdjuntadaEsteTurno = false;
+            boolean soporteUsadoEsteTurno = false;
             boolean finTurno = false;
 
             while (!finTurno && juegoActivo) {
-                // Imprimir el estado detallado del campo según la guía
                 mostrarEstadoCampo(turno, actual, oponente, energiaAdjuntadaEsteTurno);
 
                 System.out.println("\n¿Qué deseas hacer?");
@@ -72,95 +90,180 @@ public class App {
                 switch (opcion) {
                     case "1":
                         if (energiaAdjuntadaEsteTurno) {
-                            System.out.println("⚠️ Ya adjuntaste energía este turno.");
+                            System.out.println("[AVISO] Ya adjuntaste energía este turno.");
                         } else if (actual.getZonaEnergia() <= 0) {
-                            System.out.println("⚠️ No tienes energía disponible en la zona.");
+                            System.out.println("[AVISO] No tienes energía disponible en la zona.");
                         } else if (actual.getPokemonActivo() == null) {
-                            System.out.println("⚠️ No tienes un Pokémon activo.");
+                            System.out.println("[AVISO] No tienes un Pokémon activo.");
                         } else {
-                            actual.getPokemonActivo().adjuntarEnergia("⚡");
+                            actual.getPokemonActivo().adjuntarEnergia("E");
                             actual.gastarEnergiaZona();
                             energiaAdjuntadaEsteTurno = true;
-                            System.out.println("⚡ ¡Energía adjuntada a " + actual.getPokemonActivo().getNombre() + "!");
+                            System.out.println("[ENERGIA] ¡Energía adjuntada a " + actual.getPokemonActivo().getNombre() + "!");
                         }
                         break;
 
                     case "2":
-                        boolean seJugoEntrenador = false;
+                        List<Integer> indicesEntrenadores = new ArrayList<>();
+                        System.out.println("\n--- CARTAS DE ENTRENADOR EN MANO ---");
                         for (int i = 0; i < actual.getMano().getCartas().size(); i++) {
                             Carta c = actual.getMano().getCartas().get(i);
                             if (c instanceof Entrenador) {
-                                System.out.println("📜 Se jugó el Entrenador: " + c.getNombre());
-                                actual.getMano().getCartas().remove(i);
-                                seJugoEntrenador = true;
-                                break;
+                                indicesEntrenadores.add(i);
+                                String tipoE = (c instanceof Soporte) ? "Soporte" : "Objeto";
+                                System.out.println((indicesEntrenadores.size()) + ". " + c.getNombre() + " [" + tipoE + "]");
                             }
                         }
-                        if (!seJugoEntrenador) {
-                            System.out.println("⚠️ No tienes cartas de Entrenador en la mano.");
+
+                        if (indicesEntrenadores.isEmpty()) {
+                            System.out.println("[AVISO] No tienes cartas de Entrenador en la mano.");
+                            break;
+                        }
+
+                        System.out.print("Selecciona el número de carta a jugar (0 para cancelar): ");
+                        int idxSelE = Integer.parseInt(scanner.nextLine());
+
+                        if (idxSelE > 0 && idxSelE <= indicesEntrenadores.size()) {
+                            int indiceMano = indicesEntrenadores.get(idxSelE - 1);
+                            Entrenador cartaE = (Entrenador) actual.getMano().getCartas().get(indiceMano);
+
+                            if (cartaE instanceof Soporte && soporteUsadoEsteTurno) {
+                                System.out.println("[RESTRICCION] Solo puedes jugar 1 carta de Soporte por turno.");
+                                break;
+                            }
+
+                            // Quita la carta de la mano y ejecuta activarEfecto() implementado en Objeto/Soporte
+                            actual.getMano().getCartas().remove(indiceMano);
+                            if (cartaE instanceof Soporte) {
+                                soporteUsadoEsteTurno = true;
+                            }
+
+                            System.out.println("[ENTRENADOR] Se jugó: " + cartaE.getNombre());
+                            cartaE.activarEfecto(actual, actual.getPokemonActivo());
+                        } else {
+                            System.out.println("[CANCELADO] No se jugó ninguna carta.");
                         }
                         break;
 
                     case "3":
-                        boolean seColocoEnBanco = false;
+                        if (actual.getBanco().getPokemones().size() >= 2) {
+                            System.out.println("[RESTRICCION] Tu banco ya tiene el límite de 2 Pokémon.");
+                            break;
+                        }
+
+                        List<Integer> indicesPokemon = new ArrayList<>();
+                        System.out.println("\n--- POKEMON BÁSICOS EN MANO ---");
                         for (int i = 0; i < actual.getMano().getCartas().size(); i++) {
                             Carta c = actual.getMano().getCartas().get(i);
                             if (c instanceof Pokemon) {
-                                Pokemon pk = (Pokemon) actual.getMano().getCartas().remove(i);
-                                actual.getBanco().agregarPokemon(pk);
-                                System.out.println("🛡️ ¡" + pk.getNombre() + " fue colocado en el Banco!");
-                                seColocoEnBanco = true;
-                                break;
+                                indicesPokemon.add(i);
+                                System.out.println((indicesPokemon.size()) + ". " + c.getNombre() + " (" + ((Pokemon) c).getPuntosSalud() + " PS)");
                             }
                         }
-                        if (!seColocoEnBanco) {
-                            System.out.println("⚠️ No tienes cartas de Pokémon en mano para enviar al banco.");
+
+                        if (indicesPokemon.isEmpty()) {
+                            System.out.println("[AVISO] No tienes Pokémon en mano para enviar al banco.");
+                            break;
+                        }
+
+                        System.out.print("Selecciona el Pokémon a enviar al banco (0 para cancelar): ");
+                        int idxSelP = Integer.parseInt(scanner.nextLine());
+
+                        if (idxSelP > 0 && idxSelP <= indicesPokemon.size()) {
+                            int indiceMano = indicesPokemon.get(idxSelP - 1);
+                            Pokemon pk = (Pokemon) actual.getMano().getCartas().remove(indiceMano);
+                            actual.getBanco().agregarPokemon(pk);
+                            System.out.println("[BANCO] ¡" + pk.getNombre() + " fue colocado en el Banco!");
+                        } else {
+                            System.out.println("[CANCELADO] Acción cancelada.");
                         }
                         break;
 
                     case "4":
                         if (actual.getBanco().getPokemones().isEmpty()) {
-                            System.out.println("⚠️ No tienes Pokémon en el banco.");
+                            System.out.println("[AVISO] No tienes Pokémon en el banco para reemplazar al activo.");
+                        } else if (actual.getPokemonActivo() == null) {
+                            System.out.println("[AVISO] No tienes Pokémon activo.");
                         } else {
-                            Pokemon viejoActivo = actual.getPokemonActivo();
-                            Pokemon nuevoActivo = actual.getBanco().getPokemones().remove(0);
-                            if (viejoActivo != null) {
-                                actual.getBanco().agregarPokemon(viejoActivo);
+                            Pokemon activoActual = actual.getPokemonActivo();
+                            int costoRet = activoActual.getCostoRetirada();
+
+                            if (activoActual.getEnergiasAdjuntas().size() < costoRet) {
+                                System.out.println("[RESTRICCION] " + activoActual.getNombre() + " requiere " + costoRet + " energía(s) para retirarse.");
+                                break;
                             }
+
+                            for (int k = 0; k < costoRet; k++) {
+                                if (!activoActual.getEnergiasAdjuntas().isEmpty()) {
+                                    activoActual.getEnergiasAdjuntas().remove(0);
+                                }
+                            }
+
+                            System.out.println("\n--- SELECCIONA EL NUEVO POKÉMON ACTIVO DEL BANCO ---");
+                            for (int b = 0; b < actual.getBanco().getPokemones().size(); b++) {
+                                Pokemon pB = actual.getBanco().getPokemones().get(b);
+                                System.out.println((b + 1) + ". " + pB.getNombre() + " (" + pB.getPuntosSalud() + " PS)");
+                            }
+                            System.out.print("Selecciona una opción: ");
+                            int idxB = Integer.parseInt(scanner.nextLine()) - 1;
+
+                            Pokemon nuevoActivo = actual.getBanco().getPokemones().remove(idxB);
+                            actual.getBanco().agregarPokemon(activoActual);
                             actual.setPokemonActivo(nuevoActivo);
-                            System.out.println("🔄 ¡Se retiró a " + (viejoActivo != null ? viejoActivo.getNombre() : "N/A") + "! Nuevo activo: " + nuevoActivo.getNombre());
+                            System.out.println("[RETIRO] ¡" + activoActual.getNombre() + " se retiró al banco! Nuevo activo: " + nuevoActivo.getNombre());
                         }
                         break;
 
                     case "5":
-                        if (actual.getPokemonActivo() != null && oponente.getPokemonActivo() != null) {
-                            int danio = 20;
-                            oponente.getPokemonActivo().recibirDanio(danio);
-                            System.out.println("\n⚔️ ¡" + actual.getPokemonActivo().getNombre() + " ataca causando " + danio + " de daño!");
+                        if (turno == 1) {
+                            System.out.println("[RESTRICCION] El primer jugador no puede atacar en su primer turno.");
+                        } else if (actual.getPokemonActivo() != null && oponente.getPokemonActivo() != null) {
+                            Pokemon activoPropio = actual.getPokemonActivo();
+                            Pokemon activoRival = oponente.getPokemonActivo();
 
-                            if (oponente.getPokemonActivo().estaDebilitado()) {
-                                System.out.println("💀 ¡" + oponente.getPokemonActivo().getNombre() + " ha sido debilitado!");
-                                actual.agregarPuntosPremio(1);
-                                oponente.setPokemonActivo(null);
+                            if (activoPropio.getAtaques().isEmpty()) {
+                                System.out.println("[AVISO] Tu Pokémon no tiene ataques registrados.");
+                                break;
+                            }
 
-                                if (actual.ganoJuego()) {
-                                    System.out.println("\n🎉🎉 ¡" + actual.getNombre() + " HA GANADO LA PARTIDA! 🎉🎉");
+                            Ataque ataqueElegido = activoPropio.getAtaques().get(0);
+                            int energiasRequeridas = ataqueElegido.getCostoEnergia();
+
+                            if (activoPropio.getEnergiasAdjuntas().size() < energiasRequeridas) {
+                                System.out.println("[RESTRICCION] " + activoPropio.getNombre() + " necesita " + energiasRequeridas + " energía(s) para usar " + ataqueElegido.getNombre() + " (tiene " + activoPropio.getEnergiasAdjuntas().size() + ").");
+                                break;
+                            }
+
+                            // Se reutiliza directamente ReglaCombate para el cálculo de daño y debilidad
+                            reglaCombate.atacar(activoPropio, activoRival, ataqueElegido, oponente);
+
+                            // Validación de KO y condiciones de victoria
+                            if (activoRival.estaDebilitado()) {
+                                if (reglaCombate.verificarGanador(actual, oponente)) {
                                     juegoActivo = false;
+                                } else if (oponente.getBanco().estaVacio()) {
+                                    System.out.println("[DUELO] ¡" + oponente.getNombre() + " no tiene Pokémon en el banco para reemplazar al activo!");
+                                    System.out.println("\n*** ¡" + actual.getNombre() + " HA GANADO LA PARTIDA! ***");
+                                    juegoActivo = false;
+                                } else {
+                                    Pokemon sustituto = oponente.getBanco().getPokemones().remove(0);
+                                    oponente.setPokemonActivo(sustituto);
+                                    System.out.println("[BANCO] ¡" + oponente.getNombre() + " promueve a " + sustituto.getNombre() + " al puesto de Pokémon activo!");
                                 }
                             }
+                            finTurno = true;
                         } else {
-                            System.out.println("⚠️ No hay Pokémon activo en combate para atacar.");
+                            System.out.println("[AVISO] No hay Pokémon en posición de combate.");
                         }
-                        finTurno = true;
                         break;
 
                     case "6":
-                        System.out.println("⏩ Pasando turno...");
+                        System.out.println("[TURNO] Pasando turno...");
                         finTurno = true;
                         break;
 
                     default:
-                        System.out.println("⚠️ Opción inválida. Selecciona un número del 1 al 6.");
+                        System.out.println("[ERROR] Opción inválida. Selecciona un número del 1 al 6.");
                         break;
                 }
             }
@@ -175,10 +278,31 @@ public class App {
         System.out.println("\n=== PARTIDA FINALIZADA ===");
     }
 
-    // Método de renderizado del tablero según el diseño exacto de la interfaz
+    private static void seleccionarPokemonActivoInicial(Jugador jugador, Scanner scanner) {
+        List<Integer> indicesPokemon = new ArrayList<>();
+        System.out.println("\n--- " + jugador.getNombre().toUpperCase() + ": ELIGE TU POKÉMON ACTIVO INICIAL ---");
+
+        for (int i = 0; i < jugador.getMano().getCartas().size(); i++) {
+            Carta c = jugador.getMano().getCartas().get(i);
+            if (c instanceof Pokemon) {
+                indicesPokemon.add(i);
+                System.out.println(indicesPokemon.size() + ". " + c.getNombre() + " (" + ((Pokemon) c).getPuntosSalud() + " PS)");
+            }
+        }
+
+        System.out.print("Selecciona el número del Pokémon que enviarás a combatir: ");
+        int opcion = Integer.parseInt(scanner.nextLine());
+
+        int indiceMano = indicesPokemon.get(opcion - 1);
+        Pokemon activoElegido = (Pokemon) jugador.getMano().getCartas().remove(indiceMano);
+        jugador.setPokemonActivo(activoElegido);
+
+        System.out.println("[CAMPO] ¡" + activoElegido.getNombre() + " ingresa como Pokémon Activo de " + jugador.getNombre() + "!\n");
+    }
+
     private static void mostrarEstadoCampo(int turno, Jugador actual, Jugador oponente, boolean energiaUsada) {
         System.out.println("\n======================================================================");
-        System.out.println("TURNO " + turno + " — " + actual.getNombre());
+        System.out.println("TURNO " + turno + " - " + actual.getNombre());
         System.out.println("======================================================================");
 
         // --- RIVAL ---
@@ -224,7 +348,7 @@ public class App {
         }
         System.out.println(bancoPropio.toString());
         System.out.println("Puntos de premio propios: " + actual.getPuntosPremio() + "/3");
-        System.out.println("Zona de energía: 🔮 (" + (energiaUsada ? "usada" : "disponible") + ")");
+        System.out.println("Zona de energía: (" + (energiaUsada ? "usada" : "disponible") + ")");
 
         // --- TU MANO ---
         System.out.println("\nTu mano (" + actual.getMano().getCartas().size() + " cartas):");
