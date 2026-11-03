@@ -1,7 +1,7 @@
-package pokemontcg.cartas;
+package cartas;
 
 import java.util.Iterator;
-import pokemontcg.combate.Jugador;
+import combate.Jugador;
 
 public class Objeto extends Entrenador {
 

@@ -1,4 +1,4 @@
-package pokemontcg.cartas;
+package cartas;
 
 public class Ataque {
     private String nombre;

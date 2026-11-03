@@ -1,4 +1,4 @@
-package pokemontcg.cartas;
+package cartas;
 
 public abstract class Carta {
 
