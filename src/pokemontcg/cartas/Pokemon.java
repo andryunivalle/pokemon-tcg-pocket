@@ -10,6 +10,7 @@ public class Pokemon extends Carta {
     private int puntosSaludMaximos;
     private int costoRetirada;
     private String debilidad;
+    private String etapa; // Campo de etapa para la regla del mazo
     private List<Ataque> ataques;
     private List<String> energiasAdjuntas;
     private boolean esEx;
@@ -17,110 +18,105 @@ public class Pokemon extends Carta {
     // Constructor sin debilidad
     public Pokemon(String nombre, String tipo, int puntosSalud,
                    int costoRetirada, boolean esEx) {
-
-        this(nombre, tipo, puntosSalud, costoRetirada, "", esEx);
+        this(nombre, tipo, puntosSalud, costoRetirada, "", "Básico", esEx);
     }
 
-    // Constructor con debilidad
+    // Constructor con debilidad y etapa por defecto
     public Pokemon(String nombre, String tipo, int puntosSalud,
                    int costoRetirada, String debilidad, boolean esEx) {
+        this(nombre, tipo, puntosSalud, costoRetirada, debilidad, "Básico", esEx);
+    }
 
+    // Constructor completo
+    public Pokemon(String nombre, String tipo, int puntosSalud,
+                   int costoRetirada, String debilidad, String etapa, boolean esEx) {
         super(nombre, "Pokemon");
-
         this.tipo = tipo;
         this.puntosSalud = puntosSalud;
         this.puntosSaludMaximos = puntosSalud;
         this.costoRetirada = costoRetirada;
         this.debilidad = debilidad;
+        this.etapa = (etapa != null && !etapa.isBlank()) ? etapa : "Básico";
         this.esEx = esEx;
-
         this.ataques = new ArrayList<>();
         this.energiasAdjuntas = new ArrayList<>();
     }
 
-    // Obtener el tipo
     public String getTipo() {
         return tipo;
     }
 
-    // Obtener los puntos de salud actuales
     public int getPuntosSalud() {
         return puntosSalud;
     }
 
-    // Obtener los puntos de salud máximos
     public int getPuntosSaludMaximos() {
         return puntosSaludMaximos;
     }
 
-    // Obtener el costo de retirada
     public int getCostoRetirada() {
         return costoRetirada;
     }
 
-    // Obtener la debilidad
     public String getDebilidad() {
         return debilidad;
     }
 
-    // Obtener los ataques
+    public String getEtapa() {
+        return etapa;
+    }
+
     public List<Ataque> getAtaques() {
         return new ArrayList<>(ataques);
     }
 
-    // Obtener las energías adjuntas
     public List<String> getEnergiasAdjuntas() {
         return new ArrayList<>(energiasAdjuntas);
     }
 
-    // Comprobar si es un Pokémon ex
     public boolean esEx() {
         return esEx;
     }
 
-    // Obtener los puntos de premio
     public int getPuntosPremio() {
         return esEx ? 2 : 1;
     }
 
-    // Agregar un ataque
     public void agregarAtaque(Ataque ataque) {
         if (ataque != null) {
             ataques.add(ataque);
         }
     }
 
-    // Recibir daño
     public void recibirDanio(int danio) {
         if (danio > 0) {
             puntosSalud -= danio;
-
             if (puntosSalud < 0) {
                 puntosSalud = 0;
             }
         }
     }
 
-    // Curar puntos de salud
     public void curar(int cantidad) {
         if (cantidad > 0) {
             puntosSalud += cantidad;
-
             if (puntosSalud > puntosSaludMaximos) {
                 puntosSalud = puntosSaludMaximos;
             }
         }
     }
 
-    // Adjuntar una energía
     public void adjuntarEnergia(String tipoEnergia) {
         if (tipoEnergia != null && !tipoEnergia.isBlank()) {
             energiasAdjuntas.add(tipoEnergia);
         }
     }
 
-    // Descartar una energía
     public boolean descartarEnergia(String tipoEnergia) {
         return energiasAdjuntas.remove(tipoEnergia);
+    }
+
+    public boolean estaDebilitado() {
+        return getPuntosSalud() <= 0;
     }
 }
