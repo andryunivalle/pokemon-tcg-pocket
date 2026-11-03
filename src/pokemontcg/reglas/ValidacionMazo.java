@@ -2,6 +2,7 @@ package pokemontcg.reglas;
 
 
 import pokemontcg.cartas.Carta;
+import pokemontcg.cartas.Pokemon;
 import pokemontcg.combate.Mazo;
 import pokemontcg.combate.Jugador;
 
@@ -47,27 +48,44 @@ public class ValidacionMazo {
         return true;
     }
 
-    public static void repartirManoInicial(Jugador jugador){
+    public static void repartirManoInicial(Jugador jugador) {
+        if (jugador == null || jugador.getMazo() == null) return;
+
         boolean tieneBasico = false;
 
-        while (!tieneBasico){
-            jugador.getMazo().barajar();
-            jugador.getMano().getCartas().clear();
-            for (int i = 0; i < 5; i++){
-                Carta cartaRobada = jugador.getMazo().robarCarta();
-                jugador.getMano().agregarCarta(cartaRobada);
+        while (!tieneBasico) {
+            // 1. Devolver cartas de la mano al mazo si no había básico
+            while (!jugador.getMano().getCartas().isEmpty()) {
+                Carta cartaDevuelta = jugador.getMano().getCartas().remove(0);
+                jugador.getMazo().agregarCarta(cartaDevuelta);
             }
-            for (int i = 0; i < jugador.getMano().getCartas().size(); i++){
-                Carta cartaEnMano = jugador.getMano().getCartas().get(i);
-                if (cartaEnMano.getCategoria().equalsIgnoreCase("Pokemon Basico")){
-                    tieneBasico = true;
-                    break;
+
+            // 2. Barajar mazo completo
+            jugador.getMazo().barajar();
+
+            // 3. Robar 5 cartas iniciales
+            for (int i = 0; i < 5; i++) {
+                if (!jugador.getMazo().estaVacio()) {
+                    Carta cartaRobada = jugador.getMazo().robarCarta();
+                    jugador.getMano().agregarCarta(cartaRobada);
                 }
             }
-            if (!tieneBasico){
-                System.out.println("¡"+ jugador.getNombre() + " no tiene Pokemon basicos. Barajando de nuevo...");
+
+            // 4. Verificar si la nueva mano contiene al menos 1 Pokémon Básico
+            for (Carta carta : jugador.getMano().getCartas()) {
+                if (carta instanceof Pokemon) {
+                    Pokemon p = (Pokemon) carta;
+                    if ("Basico".equalsIgnoreCase(p.getEtapa()) || "Básico".equalsIgnoreCase(p.getEtapa())) {
+                        tieneBasico = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (!tieneBasico) {
+                System.out.println("¡" + jugador.getNombre() + " no tiene Pokémon básicos. Rebarajando mano!");
             }
         }
     }
-    
+
 }

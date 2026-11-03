@@ -12,6 +12,12 @@ public class Jugador {
     private int zonaEnergia;
     private int puntosPremio;
 
+    // Constructor que recibe solo el nombre (Resuelve el error en App.java)
+    public Jugador(String nombre) {
+        this(nombre, new Mazo());
+    }
+
+    // Constructor que recibe nombre y mazo
     public Jugador(String nombre, Mazo mazo) {
         this.nombre = nombre;
         this.mano = new Mano();
