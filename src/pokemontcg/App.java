@@ -285,8 +285,12 @@ public class App {
         for (int i = 0; i < jugador.getMano().getCartas().size(); i++) {
             Carta c = jugador.getMano().getCartas().get(i);
             if (c instanceof Pokemon) {
-                indicesPokemon.add(i);
-                System.out.println(indicesPokemon.size() + ". " + c.getNombre() + " (" + ((Pokemon) c).getPuntosSalud() + " PS)");
+                Pokemon p = (Pokemon) c;
+                // REGLA MP1: Solo se permiten Pokémon básicos que NO sean Pokémon-ex
+                if (!p.esEx()) {
+                    indicesPokemon.add(i);
+                    System.out.println(indicesPokemon.size() + ". " + p.getNombre() + " (" + p.getPuntosSalud() + " PS)");
+                }
             }
         }
 

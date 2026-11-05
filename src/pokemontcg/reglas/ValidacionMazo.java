@@ -51,39 +51,36 @@ public class ValidacionMazo {
     public static void repartirManoInicial(Jugador jugador) {
         if (jugador == null || jugador.getMazo() == null) return;
 
-        boolean tieneBasico = false;
+        boolean tieneBasicoValido = false;
 
-        while (!tieneBasico) {
-            // 1. Devolver cartas de la mano al mazo si no había básico
+        while (!tieneBasicoValido) {
+            // 1. Devolver mano al mazo si no hay un básico seleccionable
             while (!jugador.getMano().getCartas().isEmpty()) {
                 Carta cartaDevuelta = jugador.getMano().getCartas().remove(0);
                 jugador.getMazo().agregarCarta(cartaDevuelta);
             }
 
-            // 2. Barajar mazo completo
+            // 2. Mezclar y robar 5 cartas
             jugador.getMazo().barajar();
-
-            // 3. Robar 5 cartas iniciales
             for (int i = 0; i < 5; i++) {
                 if (!jugador.getMazo().estaVacio()) {
-                    Carta cartaRobada = jugador.getMazo().robarCarta();
-                    jugador.getMano().agregarCarta(cartaRobada);
+                    jugador.getMano().agregarCarta(jugador.getMazo().robarCarta());
                 }
             }
 
-            // 4. Verificar si la nueva mano contiene al menos 1 Pokémon Básico
+            // 3. Garantizar al menos 1 Pokémon básico que NO sea ex
             for (Carta carta : jugador.getMano().getCartas()) {
                 if (carta instanceof Pokemon) {
                     Pokemon p = (Pokemon) carta;
-                    if ("Basico".equalsIgnoreCase(p.getEtapa()) || "Básico".equalsIgnoreCase(p.getEtapa())) {
-                        tieneBasico = true;
+                    if (!p.esEx()) {
+                        tieneBasicoValido = true;
                         break;
                     }
                 }
             }
             
-            if (!tieneBasico) {
-                System.out.println("¡" + jugador.getNombre() + " no tiene Pokémon básicos. Rebarajando mano!");
+            if (!tieneBasicoValido) {
+                System.out.println("¡" + jugador.getNombre() + " no tiene Pokémon básicos iniciales (no-ex). Rebarajando!");
             }
         }
     }
