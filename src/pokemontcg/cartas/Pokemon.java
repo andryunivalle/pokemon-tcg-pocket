@@ -46,6 +46,11 @@ public class Pokemon extends Carta {
         return tipo;
     }
 
+    @Override
+    public String getCategoria() {
+        return tipo;
+    }
+
     public int getPuntosSalud() {
         return puntosSalud;
     }
@@ -110,6 +115,11 @@ public class Pokemon extends Carta {
         if (tipoEnergia != null && !tipoEnergia.isBlank()) {
             energiasAdjuntas.add(tipoEnergia);
         }
+    }
+
+    public String getTextoEnergiasAdjuntas() {
+        int cantidad = energiasAdjuntas.size();
+        return "Energías adjuntas: " + cantidad + " (" + getTipo() + ")";
     }
 
     public boolean descartarEnergia(String tipoEnergia) {

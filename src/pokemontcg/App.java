@@ -33,14 +33,16 @@ public class App {
         Jugador ash = new Jugador(n1.isBlank() ? "Jugador 1" : n1);
         Jugador gary = new Jugador(n2.isBlank() ? "Jugador 2" : n2);
 
-        // 2. Poblar Mazos desde Catálogos
-        for (Pokemon p : CatalogoPokemon.obtenerPokemon()) {
-            ash.getMazo().agregarCarta(p);
-            gary.getMazo().agregarCarta(p);
-        }
-        for (Carta e : CatalogoEntrenadores.obtenerEntrenadores()) {
-            ash.getMazo().agregarCarta(e);
-            gary.getMazo().agregarCarta(e);
+        // 2. Poblar Mazos desde Catálogos (Agregamos múltiples copias para asegurar cartas suficientes)
+        for (int i = 0; i < 3; i++) {
+            for (Pokemon p : CatalogoPokemon.obtenerPokemon()) {
+                ash.getMazo().agregarCarta(p);
+                gary.getMazo().agregarCarta(p);
+            }
+            for (Carta e : CatalogoEntrenadores.obtenerEntrenadores()) {
+                ash.getMazo().agregarCarta(e);
+                gary.getMazo().agregarCarta(e);
+            }
         }
 
         // 3. Preparación Inicial (Mezclar y Repartir Mano)
@@ -89,19 +91,22 @@ public class App {
 
                 switch (opcion) {
                     case "1":
-                        if (energiaAdjuntadaEsteTurno) {
-                            System.out.println("[AVISO] Ya adjuntaste energía este turno.");
-                        } else if (actual.getZonaEnergia() <= 0) {
-                            System.out.println("[AVISO] No tienes energía disponible en la zona.");
-                        } else if (actual.getPokemonActivo() == null) {
-                            System.out.println("[AVISO] No tienes un Pokémon activo.");
-                        } else {
-                            actual.getPokemonActivo().adjuntarEnergia("E");
-                            actual.gastarEnergiaZona();
-                            energiaAdjuntadaEsteTurno = true;
-                            System.out.println("[ENERGIA] ¡Energía adjuntada a " + actual.getPokemonActivo().getNombre() + "!");
-                        }
-                        break;
+                    if (energiaAdjuntadaEsteTurno) {
+                        System.out.println("[AVISO] Ya adjuntaste energía este turno.");
+                    } else if (actual.getZonaEnergia() <= 0) {
+                        System.out.println("[AVISO] No tienes energía disponible en la zona.");
+                    } else if (actual.getPokemonActivo() == null) {
+                        System.out.println("[AVISO] No tienes un Pokémon activo.");
+                    } else {
+                        String tipoEnergia = actual.getPokemonActivo().getCategoria(); 
+                        
+                        actual.getPokemonActivo().adjuntarEnergia(tipoEnergia);
+                        actual.gastarEnergiaZona();
+                        energiaAdjuntadaEsteTurno = true;
+                        
+                        System.out.println("[ENERGIA] ¡Energía " + tipoEnergia + " adjuntada a " + actual.getPokemonActivo().getNombre() + "!");
+                    }
+                    break;
 
                     case "2":
                         List<Integer> indicesEntrenadores = new ArrayList<>();
@@ -132,7 +137,6 @@ public class App {
                                 break;
                             }
 
-                            // Quita la carta de la mano y ejecuta activarEfecto() implementado en Objeto/Soporte
                             actual.getMano().getCartas().remove(indiceMano);
                             if (cartaE instanceof Soporte) {
                                 soporteUsadoEsteTurno = true;
@@ -188,11 +192,15 @@ public class App {
                             Pokemon activoActual = actual.getPokemonActivo();
                             int costoRet = activoActual.getCostoRetirada();
 
+                            System.out.println("[RETIRO] " + activoActual.getNombre() + " tiene un costo de retirada de " + costoRet + " energía(s).");
+
                             if (activoActual.getEnergiasAdjuntas().size() < costoRet) {
-                                System.out.println("[RESTRICCION] " + activoActual.getNombre() + " requiere " + costoRet + " energía(s) para retirarse.");
+                                System.out.println("[RESTRICCION] Se requieren " + costoRet + " energía(s) adjunta(s) para retirarse. (" +
+                                                   activoActual.getEnergiasAdjuntas().size() + "/" + costoRet + ")");
                                 break;
                             }
 
+                            // Descartar las energías requeridas para la retirada
                             for (int k = 0; k < costoRet; k++) {
                                 if (!activoActual.getEnergiasAdjuntas().isEmpty()) {
                                     activoActual.getEnergiasAdjuntas().remove(0);
@@ -207,10 +215,15 @@ public class App {
                             System.out.print("Selecciona una opción: ");
                             int idxB = Integer.parseInt(scanner.nextLine()) - 1;
 
-                            Pokemon nuevoActivo = actual.getBanco().getPokemones().remove(idxB);
-                            actual.getBanco().agregarPokemon(activoActual);
-                            actual.setPokemonActivo(nuevoActivo);
-                            System.out.println("[RETIRO] ¡" + activoActual.getNombre() + " se retiró al banco! Nuevo activo: " + nuevoActivo.getNombre());
+                            if (idxB >= 0 && idxB < actual.getBanco().getPokemones().size()) {
+                                Pokemon nuevoActivo = actual.getBanco().getPokemones().remove(idxB);
+                                actual.getBanco().agregarPokemon(activoActual);
+                                actual.setPokemonActivo(nuevoActivo);
+                                System.out.println("[RETIRO] ¡" + activoActual.getNombre() + " pagó su costo de retirada (" + costoRet + 
+                                                   " energía(s)) y pasó al banco! Nuevo activo: " + nuevoActivo.getNombre());
+                            } else {
+                                System.out.println("[ERROR] Selección inválida.");
+                            }
                         }
                         break;
 
@@ -227,17 +240,11 @@ public class App {
                             }
 
                             Ataque ataqueElegido = activoPropio.getAtaques().get(0);
-                            int energiasRequeridas = ataqueElegido.getCostoEnergia();
 
-                            if (activoPropio.getEnergiasAdjuntas().size() < energiasRequeridas) {
-                                System.out.println("[RESTRICCION] " + activoPropio.getNombre() + " necesita " + energiasRequeridas + " energía(s) para usar " + ataqueElegido.getNombre() + " (tiene " + activoPropio.getEnergiasAdjuntas().size() + ").");
-                                break;
-                            }
+                            // Delegar el ataque y la validación de energías a ReglaCombate
+                            reglaCombate.atacar(actual, activoRival, ataqueElegido, oponente);
 
-                            // Se reutiliza directamente ReglaCombate para el cálculo de daño y debilidad
-                            reglaCombate.atacar(activoPropio, activoRival, ataqueElegido, oponente);
-
-                            // Validación de KO y condiciones de victoria
+                            // Verificar KO y condiciones de victoria al finalizar la acción
                             if (activoRival.estaDebilitado()) {
                                 if (reglaCombate.verificarGanador(actual, oponente)) {
                                     juegoActivo = false;
@@ -286,7 +293,6 @@ public class App {
             Carta c = jugador.getMano().getCartas().get(i);
             if (c instanceof Pokemon) {
                 Pokemon p = (Pokemon) c;
-                // REGLA MP1: Solo se permiten Pokémon básicos que NO sean Pokémon-ex
                 if (!p.esEx()) {
                     indicesPokemon.add(i);
                     System.out.println(indicesPokemon.size() + ". " + p.getNombre() + " (" + p.getPuntosSalud() + " PS)");
@@ -312,7 +318,7 @@ public class App {
         // --- RIVAL ---
         Pokemon actRival = oponente.getPokemonActivo();
         String infoActRival = (actRival != null)
-                ? "[Activo] " + actRival.getNombre() + "   Energía adjunta: " + formatoEnergias(actRival)
+                ? "[Activo] " + actRival.getNombre() + "   Energía adjunta: " + formatoEnergias(actRival) + " | Costo Retirada: " + actRival.getCostoRetirada()
                 : "[Activo] Ninguno";
         String psRival = (actRival != null) ? actRival.getPuntosSalud() + "/" + actRival.getPuntosSaludMaximos() : "0/0";
 
@@ -335,7 +341,7 @@ public class App {
         // --- TU CAMPO ---
         Pokemon actPropio = actual.getPokemonActivo();
         String infoActPropio = (actPropio != null)
-                ? "[Activo] " + actPropio.getNombre() + "   Energía adjunta: " + formatoEnergias(actPropio)
+                ? "[Activo] " + actPropio.getNombre() + "   Energía adjunta: " + formatoEnergias(actPropio) + " | Costo Retirada: " + actPropio.getCostoRetirada()
                 : "[Activo] Ninguno";
         String psPropio = (actPropio != null) ? actPropio.getPuntosSalud() + "/" + actPropio.getPuntosSaludMaximos() : "0/0";
 
@@ -363,9 +369,10 @@ public class App {
     }
 
     private static String formatoEnergias(Pokemon p) {
-        if (p == null || p.getEnergiasAdjuntas().isEmpty()) {
-            return "Ninguna";
+        if (p == null) {
+            return "0";
         }
-        return String.join(" ", p.getEnergiasAdjuntas());
+        int cantidad = p.getEnergiasAdjuntas().size();
+        return cantidad + " (" + p.getTipo() + ")";
     }
 }
