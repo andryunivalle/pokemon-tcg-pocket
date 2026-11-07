@@ -242,7 +242,7 @@ public class App {
                             Ataque ataqueElegido = activoPropio.getAtaques().get(0);
 
                             // Delegar el ataque y la validación de energías a ReglaCombate
-                            reglaCombate.atacar(activoPropio, activoRival, ataqueElegido, oponente);
+                            reglaCombate.atacar(actual, activoRival, ataqueElegido, oponente);
 
                             // Verificar KO y condiciones de victoria al finalizar la acción
                             if (activoRival.estaDebilitado()) {
