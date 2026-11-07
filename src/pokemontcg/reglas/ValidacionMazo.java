@@ -1,6 +1,5 @@
 package pokemontcg.reglas;
 
-
 import pokemontcg.cartas.Carta;
 import pokemontcg.cartas.Pokemon;
 import pokemontcg.combate.Mazo;
@@ -9,7 +8,7 @@ import pokemontcg.combate.Jugador;
 public class ValidacionMazo {
 
     public static boolean validarMazo(Mazo mazo) {
-        if (mazo.getCartas().size() != 20){
+        if (mazo.getCartas().size() != 20) {
             System.out.println("El mazo debe contener exactamente 20 cartas.");
             return false;
         }
@@ -17,31 +16,34 @@ public class ValidacionMazo {
         int contieneBasico = 0;
         java.util.List<Carta> listaCartas = mazo.getCartas();
         
-        for (int i = 0; i < listaCartas.size(); i++){
+        for (int i = 0; i < listaCartas.size(); i++) {
             Carta cartaActual = listaCartas.get(i);
 
-            if (cartaActual.getCategoria().equalsIgnoreCase("Pokemon Basico")){
-                contieneBasico++;
+            // Se valida correctamente si la carta es un Pokémon Básico
+            if (cartaActual instanceof Pokemon) {
+                Pokemon p = (Pokemon) cartaActual;
+                if (p.getEtapa().equalsIgnoreCase("Básico") || p.getEtapa().equalsIgnoreCase("Basico")) {
+                    contieneBasico++;
+                }
             }
 
             String nombreActual = cartaActual.getNombre();
             int repeticiones = 0;
 
-            for (int j = 0; j < listaCartas.size(); j++){
-                if (listaCartas.get(j).getNombre().equals(nombreActual)){
+            for (int j = 0; j < listaCartas.size(); j++) {
+                if (listaCartas.get(j).getNombre().equals(nombreActual)) {
                     repeticiones++;
                 }
-
             }    
 
-            if (repeticiones > 2){
+            if (repeticiones > 2) {
                 System.out.println("La carta " + nombreActual + " se repite más de 2 veces en el mazo.");
                 return false;
             }
         }    
 
-        if (contieneBasico < 6){
-            System.out.println("El mazo debe contener al menos 6 Pokemon basicos.");
+        if (contieneBasico < 6) {
+            System.out.println("El mazo debe contener al menos 6 Pokémon básicos.");
             return false;
         }
         System.out.println("¡Mazo validado exitosamente!");
@@ -84,5 +86,4 @@ public class ValidacionMazo {
             }
         }
     }
-
 }

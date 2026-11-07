@@ -28,12 +28,13 @@ public class Jugador {
         this.puntosPremio = 0;
     }
 
-    public void robarCarta(){
-        if (!mazo.estaVacio()){
+    public void robarCarta() {
+        if (!mazo.estaVacio()) {
             Carta cartaRobada = mazo.robarCarta();
             mano.agregarCarta(cartaRobada);
-        }else{
-            System.out.println(nombre + " intento robar carta pero el mazo esta vacio. ¡Pierde el juego!");
+            System.out.println("[ROBO] ¡" + nombre + " robó la carta " + cartaRobada.getNombre() + "!");
+        } else {
+            System.out.println("[ROBO] " + nombre + " intentó robar carta pero el mazo está vacío.");
         }
     }
 
