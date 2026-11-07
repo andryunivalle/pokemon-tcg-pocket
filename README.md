@@ -66,7 +66,7 @@ El juego simula una batalla entre dos jugadores utilizando las reglas de Pokémo
 
 1. **Clonar el repositorio:**
    ```bash
-   git clone 
+   git clone https://github.com/andryunivalle/pokemon-tcg-pocket
    cd pokemon-tcg-pocket
 
 # Trabajo colaborativo
